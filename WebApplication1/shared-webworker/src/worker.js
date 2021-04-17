@@ -5,29 +5,27 @@
 importScripts("signalr.js");
 
 let connection = /** @type {signalR.HubConnection} */ new signalR.HubConnectionBuilder()
-  .withUrl("https://localhost:5001/chat")
+  .withUrl(`${origin}/chat`)
   .build();
-
-connection.on("receiveMessage", (data) => {
-  console.log(data);
-  postMessage(
-    /** @type {AppWorker.WorkerMessage} */ ({
-      message: data,
-      connectionId: connection.connectionId,
-    })
-  );
-});
 
 connection
   .start()
   .then(() => connection.invoke("sendMessage", "Hello", "user"));
 
-onmessage = function (e) {
-  console.log("Message received from main script", e);
-  console.log("Posting message back to main script");
-  connection.invoke("sendMessage", e.data, "user");
-};
+onconnect = function (e) {
+  var port = /** @type {MessagePort} */ (e.ports[0]);
+  port.onmessage = function (e) {
+    console.log("Message received from main script", e);
+    connection.invoke("sendMessage", e.data, "user");
+  };
 
-onerror = function (e) {
-  console.log("error!", e);
+  connection.on("receiveMessage", (data) => {
+    console.log(data);
+    port.postMessage(
+      /** @type {AppWorker.WorkerMessage} */ ({
+        message: data,
+        connectionId: connection.connectionId,
+      })
+    );
+  });
 };
