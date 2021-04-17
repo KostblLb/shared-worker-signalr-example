@@ -1,0 +1,5 @@
+<div>
+  <input #input [(ngModel)]="inputValue" />
+  <button (click)="sendInput(); inputValue = null">Send</button>
+</div>
+<div>Worker says: {{ lastWorkerReceivedMessage$ | async }}</div>
